@@ -544,6 +544,9 @@ export const runUpdateSegments = async (
 
   await Exec(config, "CALL update_segments(?, ?)", since, nowISO);
 
+// inject delay
+  await new Promise(resolve => setTimeout(resolve, 4000));
+
   if (pruneSegments) {
     await Exec(config, "CALL prune_segments(?)", nowISO);
   }
