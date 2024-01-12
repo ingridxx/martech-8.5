@@ -29,12 +29,9 @@ export const EnableSimulatorWarning = () => {
     <Alert status="warning" borderRadius="md">
       <AlertIcon />
       <Box display="flex" flexDirection="column">
-        <AlertTitle>The simulator is disabled</AlertTitle>
+        <AlertTitle>Unable to fetch data</AlertTitle>
         <AlertDescription>
-          This application uses a simulator to generate new data like live
-          notifications and subscribers. To experience the full power of
-          real-time digital marketing, please enable the simulator in the nav
-          bar.
+          There has been a connection disruption to the data sources. Please verify your connection.
         </AlertDescription>
       </Box>
     </Alert>

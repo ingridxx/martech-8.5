@@ -1028,6 +1028,7 @@ export const Configure = () => {
     config,
     connected && initialized
   );
+  console.log("in configure ")
 
   const sectionDefinitions = [
     {

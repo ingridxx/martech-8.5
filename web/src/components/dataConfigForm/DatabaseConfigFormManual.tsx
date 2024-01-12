@@ -129,7 +129,7 @@ export const DatabaseConfigFormManual = ({
           value={localPassword}
           setValue={setLocalPassword}
           type="password"
-        />
+        />       
       </SimpleGrid>
       {databaseInput}
       {scaleFactor}

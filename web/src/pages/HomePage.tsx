@@ -64,7 +64,7 @@ const ConnectSection: React.FC = () => {
             fontWeight="bold"
             gap={1}
           >
-            Connect to SinglestoreDB
+            Connect to SinglestoreDB!
           </Tab>
         </TabList>
         <TabPanels padding={0} margin={0}>
