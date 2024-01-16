@@ -355,9 +355,31 @@ const ConversionTable = () => {
 };
 
 const CostsTable = () => {
+  console.log("rendering...")
   const config = useRecoilValue(connectionConfig);
   const [sortColumn, setSortColumn] =
     React.useState<keyof CostMetrics>("cost");
+
+  const [loading, setLoading] = React.useState(false);
+
+  const handleSortColumn = (column) => {
+    if (column === 'cost') {
+      setLoading(true); 
+    } else {
+      setSortColumn(column);
+    }
+  };
+  // Effect to handle delayed sorting
+  React.useEffect(() => {
+    let timeout;
+    if (loading) {
+      timeout = setTimeout(() => {
+        setSortColumn('cost');
+        setLoading(false);
+      }, 4000); // Delay of 5 seconds
+    }
+    return () => clearTimeout(timeout); // Cleanup timeout on unmount
+  }, [loading]);
 
   const costTableData = useSWR(
     ["costMetrics", config, sortColumn],
@@ -377,55 +399,64 @@ const CostsTable = () => {
   };
 
   const getTableBody = () => {
-    if (costTableData.isValidating && !costTableData.data) {
+    if (loading) {
+      // Render loader in the middle of the table
       return (
         <Tr>
-          <Td colSpan={4}>
+          <Td colSpan={5} style={{ textAlign: 'center' }}>
             <Loader size="small" centered />
           </Td>
         </Tr>
       );
-    } else if (!costTableData.data) {
-      return (
-        <Tr>
-          <Td colSpan={4}>
-            <Text display="flex" justifyContent="center" width="100%">
-              No data
-            </Text>
-          </Td>
-        </Tr>
-      );
-    }
+    } else if (costTableData.isValidating && !costTableData.data) {
+        return (
+          <Tr>
+            <Td colSpan={4}>
+              <Loader size="small" centered />
+            </Td>
+          </Tr>
+        );
+      } else if (!costTableData.data) {
+        return (
+          <Tr>
+            <Td colSpan={4}>
+              <Text display="flex" justifyContent="center" width="100%">
+                No data
+              </Text>
+            </Td>
+          </Tr>
+        );
+      }
     
-    return costTableData.data?.map((offer) => (
-      <Tr key={`${offer.offerId}-${offer.subscriberId}-${offer.timestamp}-${offer.customer}`}>
-        <Td>{offer.customer}</Td>
-        <Td>{offer.timestamp}</Td>
-        <Td>{offer.offerId}</Td>
-        <Td>{offer.subscriberId}</Td>
-        <Td paddingLeft={cellLeftPadding}>
-          <Box
-            background="white"
-            display="inline-block"
-            borderRadius="5px"
-            padding={0}
-            margin={0}
-          >
+      return costTableData.data?.map((offer) => (
+        <Tr key={`${offer.offerId}-${offer.subscriberId}-${offer.timestamp}-${offer.customer}`}>
+          <Td>{offer.customer}</Td>
+          <Td>{offer.timestamp}</Td>
+          <Td>{offer.offerId}</Td>
+          <Td>{offer.subscriberId}</Td>
+          <Td paddingLeft={cellLeftPadding}>
             <Box
+              background="white"
               display="inline-block"
               borderRadius="5px"
-              padding="4px"
-              fontSize="xs"
-              background={getCostColor(offer.cost, minCost, maxCost)}
-              color="rgba(0,0,0,1)"
+              padding={0}
+              margin={0}
             >
-              {offer.cost}
+              <Box
+                display="inline-block"
+                borderRadius="5px"
+                padding="4px"
+                fontSize="xs"
+                background={getCostColor(offer.cost, minCost, maxCost)}
+                color="rgba(0,0,0,1)"
+              >
+                {offer.cost}
+              </Box>
             </Box>
-          </Box>
-        </Td>
-      </Tr>
-    ));
-};
+          </Td>
+        </Tr>
+      ));
+  };
 
   const THContentWrapper = ({
     sortColumnValue,
@@ -438,7 +469,7 @@ const CostsTable = () => {
   }) => {
     return (
       <Th
-        onClick={() => setSortColumn(sortColumnValue)}
+        onClick={() => handleSortColumn(sortColumnValue)}
         _hover={{ color: activeColor }}
         padding={0}
         color={sortColumnValue === sortColumn ? activeColor : undefined}
@@ -487,7 +518,7 @@ const CostsTable = () => {
               />
               <THContentWrapper
                 sortColumnValue="cost"
-                icon={HiOutlineCurrencyDollar}
+                icon={HiCurrencyDollar}
                 title="Cost"
               />
             </Tr>
