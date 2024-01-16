@@ -683,6 +683,14 @@ export type CustomerMetrics = {
   conversionRate: number;
 };
 
+export type CostMetrics = {
+  customer: string;
+  timestamp: string;
+  subscriberId: number;
+  offerId: number;
+  cost: number;
+}
+
 export const customerMetrics = (
   config: ConnectionConfig,
   eventTable: ConversionEventTable,
@@ -708,6 +716,25 @@ export const customerMetrics = (
         LIMIT ${limit}`,
     }).sql
   );
+
+  export const costMetrics = (
+    config: ConnectionConfig,
+    sortColumn: keyof CostMetrics,
+    limit: number
+  ) =>
+    Query<CostMetrics>(
+      config,
+      `SELECT offers.customer,
+        DATE_FORMAT(ts, '%Y-%m-%d %H:%i:%s') AS timestamp,
+        subscriber_id AS subscriberId,
+        n.offer_id AS offerId,
+        ROUND((cost_cents/10),2) AS cost 
+        FROM notifications n, offers
+        WHERE n.offer_id = offers.offer_id
+        ORDER BY ${sortColumn} DESC
+        LIMIT 10 
+      `,
+    );
 
 export const overallConversionRate = (
   config: ConnectionConfig,

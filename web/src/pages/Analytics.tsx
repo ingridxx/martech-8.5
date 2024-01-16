@@ -29,8 +29,8 @@ import { interpolateRgb } from "d3-interpolate";
 import { Bounds } from "pigeon-maps";
 import * as React from "react";
 import { IconType } from "react-icons";
-import { BsGearFill } from "react-icons/bs";
-import { HiBell, HiOfficeBuilding, HiRefresh } from "react-icons/hi";
+import { BsGearFill, BsPerson } from "react-icons/bs";
+import { HiBell, HiCalendar, HiCurrencyDollar, HiOfficeBuilding, HiOutlineBell, HiOutlineCalendar, HiOutlineCurrencyDollar, HiOutlineUser, HiPhone, HiRefresh, HiUser } from "react-icons/hi";
 import { useRecoilValue } from "recoil";
 import useSWR from "swr";
 
@@ -39,6 +39,8 @@ import { EnableSimulatorWarning } from "@/components/EnableSimulatorButton";
 import { Heatmap } from "@/components/HeatMap";
 import { SetupDatabaseButton } from "@/components/SetupDatabaseButton";
 import {
+  costMetrics,
+  CostMetrics,
   CustomerMetrics,
   customerMetrics,
   estimatedRowCountObj,
@@ -148,6 +150,15 @@ const DashboardContainerChild = () => {
           </Text>
         </Stack>
         <ConversionTable />
+      </Stack>
+            <Stack spacing={3}>
+        <Stack spacing={2}>
+          <Heading fontSize="xl">Latest Notifications</Heading>
+          <Text overflowWrap="break-word">
+            Latest offers & cost per notification
+          </Text>
+        </Stack>
+        <CostsTable />
       </Stack>
     </Stack>
   );
@@ -333,6 +344,151 @@ const ConversionTable = () => {
                 sortColumnValue="conversionRate"
                 icon={BsGearFill}
                 title="Conversion Rate"
+              />
+            </Tr>
+          </Thead>
+          <Tbody>{getTableBody()}</Tbody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+};
+
+const CostsTable = () => {
+  const config = useRecoilValue(connectionConfig);
+  const [sortColumn, setSortColumn] =
+    React.useState<keyof CostMetrics>("cost");
+
+  const costTableData = useSWR(
+    ["costMetrics", config, sortColumn],
+    () => costMetrics(config, sortColumn, 10),
+    { refreshInterval: 1000 }
+  );
+  const activeColor = useColorModeValue("#553ACF", "#CCC3F9");
+  const cellLeftPadding = "10px";
+
+  const maxCost = Math.max(...costTableData.data?.map(offer => offer.cost) ?? [0]);
+  const minCost = Math.min(...costTableData.data?.map(offer => offer.cost) ?? [0]);
+
+  // Function to determine the background color based on cost
+  const getCostColor = (cost: number, minCost: number, maxCost: number) => {
+    const intensity = maxCost !== minCost ? (cost - minCost) / (maxCost - minCost) : 0;
+    return `rgba(0, 128, 0, ${1 - intensity})`;
+  };
+
+  const getTableBody = () => {
+    if (costTableData.isValidating && !costTableData.data) {
+      return (
+        <Tr>
+          <Td colSpan={4}>
+            <Loader size="small" centered />
+          </Td>
+        </Tr>
+      );
+    } else if (!costTableData.data) {
+      return (
+        <Tr>
+          <Td colSpan={4}>
+            <Text display="flex" justifyContent="center" width="100%">
+              No data
+            </Text>
+          </Td>
+        </Tr>
+      );
+    }
+    
+    return costTableData.data?.map((offer) => (
+      <Tr key={`${offer.offerId}-${offer.subscriberId}-${offer.timestamp}-${offer.customer}`}>
+        <Td>{offer.customer}</Td>
+        <Td>{offer.timestamp}</Td>
+        <Td>{offer.offerId}</Td>
+        <Td>{offer.subscriberId}</Td>
+        <Td paddingLeft={cellLeftPadding}>
+          <Box
+            background="white"
+            display="inline-block"
+            borderRadius="5px"
+            padding={0}
+            margin={0}
+          >
+            <Box
+              display="inline-block"
+              borderRadius="5px"
+              padding="4px"
+              fontSize="xs"
+              background={getCostColor(offer.cost, minCost, maxCost)}
+              color="rgba(0,0,0,1)"
+            >
+              {offer.cost}
+            </Box>
+          </Box>
+        </Td>
+      </Tr>
+    ));
+};
+
+  const THContentWrapper = ({
+    sortColumnValue,
+    icon,
+    title,
+  }: {
+    sortColumnValue: React.SetStateAction<keyof CostMetrics>;
+    icon: IconType;
+    title: string;
+  }) => {
+    return (
+      <Th
+        onClick={() => setSortColumn(sortColumnValue)}
+        _hover={{ color: activeColor }}
+        padding={0}
+        color={sortColumnValue === sortColumn ? activeColor : undefined}
+        cursor="pointer"
+      >
+        <Box
+          justifyContent="left"
+          gap={2}
+          alignItems="center"
+          padding={cellLeftPadding}
+          display="flex"
+        >
+          <Icon as={icon} />
+          {title}
+          {sortColumnValue === sortColumn ? <ChevronDownIcon /> : undefined}
+        </Box>
+      </Th>
+    );
+  };
+
+  return (
+    <Box overflowX="auto">
+      <TableContainer>
+        <Table size="sm" variant="striped">
+          <Thead background={useColorModeValue("#ECE8FD", "#2F206E")}>
+            <Tr>
+              <THContentWrapper
+                sortColumnValue="customer"
+                icon={HiOfficeBuilding}
+                title="Company"
+              />
+              <THContentWrapper
+                sortColumnValue="timestamp"
+                icon={HiCalendar}
+                title="Timestamp"
+              />
+              <THContentWrapper
+                sortColumnValue="subscriberId"
+                icon={HiUser}
+                title="Subscriber ID"
+              />
+              <THContentWrapper
+                sortColumnValue="offerId"
+                icon={HiBell}
+                title="Offer ID"
+              />
+              <THContentWrapper
+                sortColumnValue="cost"
+                icon={HiOutlineCurrencyDollar}
+                title="Cost"
               />
             </Tr>
           </Thead>
