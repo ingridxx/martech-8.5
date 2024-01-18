@@ -128,7 +128,7 @@ const DashboardContainerChild = () => {
 
   if (!initialized) {
     return <SetupDatabaseButton />;
-  } else if (!enabled) {
+  } else if (enabled) {
     return <EnableSimulatorWarning />;
   }
   return (
@@ -358,7 +358,7 @@ const CostsTable = () => {
   console.log("rendering...")
   const config = useRecoilValue(connectionConfig);
   const [sortColumn, setSortColumn] =
-    React.useState<keyof CostMetrics>("cost");
+    React.useState<keyof CostMetrics>("timestamp");
 
   const [loading, setLoading] = React.useState(false);
 
